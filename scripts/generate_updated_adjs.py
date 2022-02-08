@@ -18,13 +18,6 @@ generate_adjs.adj_split_axons_dendrites(all_neurons, split_tag, special_split_ta
 
 # %%
 
-# generate edge list with minimum pairwise threshold = 1
-pairs_path = 'data/pairs/pairs-2021-04-06.csv'
-pairs = contools.Promat.get_pairs(pairs_path=pairs_path)
-generate_adjs.edge_thresholds(path='data/adj', threshold=1, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=False, date='2022-02-03')
-
-# %%
-
 # generate edge list with average pairwise threshold = 3
 pairs_path = 'data/pairs/pairs-2021-04-06.csv'
 pairs = contools.Promat.get_pairs(pairs_path=pairs_path)
@@ -37,4 +30,3 @@ pairs_path = 'data/pairs/pairs-2021-04-06.csv'
 pairs = contools.Promat.get_pairs(pairs_path=pairs_path)
 generate_adjs.edge_thresholds(path='data/adj', threshold=0.01, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=True, date='2022-02-03')
 
-# %%

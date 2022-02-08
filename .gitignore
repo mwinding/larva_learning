@@ -1,3 +1,11 @@
+# where raw data is stored
 data
+
+# where plots are saved
+plots
+
+# private CATMAID credentials
 pymaid_creds.py
+
+
 __pycache__
