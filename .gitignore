@@ -7,5 +7,7 @@ plots
 # private CATMAID credentials
 pymaid_creds.py
 
+# file management from macOS
+.DS_Store
 
 __pycache__
