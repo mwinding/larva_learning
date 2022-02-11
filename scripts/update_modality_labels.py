@@ -38,24 +38,29 @@ brain_inputs = brain_inputs + pymaid.get_skids_by_annotation('mw A1 ascending un
 brain = pymaid.get_skids_by_annotation('mw brain neurons') + brain_inputs
 
 pdiff = pymaid.get_skids_by_annotation('mw partially differentiated')
+SEZ_motorneurons = pymaid.get_skids_by_annotation('mw motor')
+exclude = brain_inputs+pdiff+SEZ_motorneurons
 
-order2 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=brain_inputs+pdiff)[0] for skids in input_types.source]
-input_types['order2'] = order2
+order2 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude)[0] for skids in input_types.source]
+order2['order2'] = order2
+
+# check problem with [7865696, 8252067]; discovered that when using all-edges, unpaired neurons can pass the threshold. This occurs because many sensory neurons aren't paired
+# decide if I want to throw out these unpaired neurons (more strict) or allow them
 
 all_order2 = list(np.unique([x for sublist in input_types.order2 for x in sublist]))
-order3 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=brain_inputs+pdiff+all_order2)[0] for skids in input_types.order2]
+order3 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order2)[0] for skids in input_types.order2]
 input_types['order3'] = order3
 
 all_order3 = list(np.unique([x for sublist in input_types.order3 for x in sublist]))
-order4 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=brain_inputs+pdiff+all_order3+all_order2)[0] for skids in input_types.order3]
+order4 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order3+all_order2)[0] for skids in input_types.order3]
 input_types['order4'] = order4
 
 all_order4 = list(np.unique([x for sublist in input_types.order4 for x in sublist]))
-order5 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=brain_inputs+pdiff+all_order4+all_order3+all_order2)[0] for skids in input_types.order4]
+order5 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order4+all_order3+all_order2)[0] for skids in input_types.order4]
 input_types['order5'] = order5
 
 all_order5 = list(np.unique([x for sublist in input_types.order5 for x in sublist]))
-order6 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=brain_inputs+pdiff+all_order5+all_order4+all_order3+all_order2)[0] for skids in input_types.order5]
+order6 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order5+all_order4+all_order3+all_order2)[0] for skids in input_types.order5]
 input_types['order6'] = order6
 
 all_order6 = list(np.unique([x for sublist in input_types.order6 for x in sublist]))
@@ -63,7 +68,7 @@ all_order6 = list(np.unique([x for sublist in input_types.order6 for x in sublis
 # %%
 # export IDs for modality layers
 
-'''
+
 [pymaid.add_annotations(input_types.order2.loc[index], f'mw {input_types.type.loc[index]} 2nd_order') for index in input_types.index]
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 2nd_order' for index in input_types.index], 'mw brain inputs 2nd_order')
 [pymaid.add_annotations(input_types.order3.loc[index], f'mw {input_types.type.loc[index]} 3rd_order') for index in input_types.index]
@@ -72,7 +77,7 @@ pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 3rd_order' for i
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 4th_order' for index in input_types.index], 'mw brain inputs 4th_order')
 [pymaid.add_annotations(input_types.order5.loc[index], f'mw {input_types.type.loc[index]} 5th_order') for index in input_types.index if len(input_types.order5.loc[index])!=0]
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 5th_order' for index in input_types.index if len(input_types.order5.loc[index])!=0], 'mw brain inputs 5th_order')
-'''
+
 input_types = input_types.set_index('type') # for future chunks
 
 # %%
@@ -102,8 +107,6 @@ threshold = 0.5
 LNs_2nd = [celltype.identify_LNs(threshold, summed_adj, aa_adj, sens[i], outputs, exclude=exclude, pairs_path=pairs_path)[0] for i, celltype in enumerate(order2_ct)]
 LNs_3rd = [celltype.identify_LNs(threshold, summed_adj, aa_adj, order2_ct[i].get_skids(), outputs, exclude=exclude, pairs_path=pairs_path)[0] for i, celltype in enumerate(order3_ct)]
 LNs_4th = [celltype.identify_LNs(threshold, summed_adj, aa_adj, order3_ct[i].get_skids(), outputs, exclude=exclude, pairs_path=pairs_path)[0] for i, celltype in enumerate(order4_ct)]
-
-# something is wrong! [7939979, 8198317] as test case
 
 # export LNs
 [pymaid.add_annotations(LNs_2nd[i], f'mw brain 2nd_order LN {name}') for i, name in enumerate(order) if len(LNs_2nd[i])>0]
@@ -144,3 +147,19 @@ LNs_o = [Celltype_Analyzer.get_skids_from_meta_annotation(f'mw brain inputs {ord
 LNs_io = [Celltype_Analyzer.get_skids_from_meta_annotation(f'mw brain inputs {order} LN_io') for order in ['2nd_order', '3rd_order']]
 pymaid.add_annotations(LNs_o, 'mw LNs_cohort')
 pymaid.add_annotations(LNs_io, 'mw LNs_noncohort')
+
+# %%
+# identify PNs by exclusion (not LN and not output neuron[dVNC, dSEZ, RGN])
+
+# pull skids for 2nd-order modalities
+order = ['olfactory', 'gustatory-external', 'gustatory-pharyngeal', 'enteric', 'thermo-warm', 'thermo-cold', 'visual', 'noci', 'mechano-Ch', 'mechano-II/III', 'proprio', 'respiratory']
+order2_ct = [Celltype(f'{celltype}', pymaid.get_skids_by_annotation(f'mw {celltype} 2nd_order')) for celltype in order]
+
+LNs = Celltype_Analyzer.get_skids_from_meta_annotation('mw brain LNs')
+outputs = pymaid.get_skids_by_annotation(['mw dVNC', 'mw dSEZ', 'mw RGN'])
+
+PNs_2nd = [Celltype(f'mw {celltype.name} 2nd_order PN', np.setdiff1d(celltype.skids, LNs + outputs)) for celltype in order2_ct]
+
+current_PNs = [Celltype(f'{celltype}', pymaid.get_skids_by_annotation(f'mw {celltype} 2nd_order PN')) for celltype in order]
+
+# %%
