@@ -23,17 +23,19 @@ generate_adjs.adj_split_axons_dendrites(all_neurons, split_tag, special_split_ta
 # %%
 
 # generate edge list with average pairwise threshold = 3
-pairs_path = 'data/pairs/pairs-2021-04-06.csv'
+threshold = 3
+pairs_path = 'data/pairs/pairs-2022-02-14.csv'
 pairs = contools.Promat.get_pairs(pairs_path=pairs_path)
-date = '2022-02-10'
-generate_adjs.edge_thresholds(path='data/adj', threshold=3, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=False, date=date)
+date = '2022-02-15'
+generate_adjs.edge_thresholds(path='data/adj', threshold=threshold, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=False, date=date)
 
 # %%
 
 # generate edge list with %input threshold = 0.01
-pairs_path = 'data/pairs/pairs-2021-04-06.csv'
+threshold = 0.01
+pairs_path = 'data/pairs/pairs-2022-02-14.csv'
 pairs = contools.Promat.get_pairs(pairs_path=pairs_path)
-generate_adjs.edge_thresholds(path='data/adj', threshold=0.01, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=True, date=date)
-
+date = '2022-02-10'
+generate_adjs.edge_thresholds(path='data/adj', threshold=threshold, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=True, date=date)
 
 # %%

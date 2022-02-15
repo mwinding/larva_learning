@@ -9,7 +9,7 @@ import pandas as pd
 from pymaid_creds import url, name, password, token
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
-pairs_path = 'data/pairs/pairs-2022-02-10.csv'
+pairs_path = 'data/pairs/pairs-2022-02-14.csv'
 pairs = Promat.get_pairs(pairs_path)
 
 # %%
@@ -31,6 +31,7 @@ input_types = pd.DataFrame(zip(input_names, input_types), columns = ['type', 'so
 date='2022-02-10'
 threshold = 0.01
 edges_ad = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_all-edges_{date}.csv', index_col=0)
+edges_ad_pairs = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_paired-edges_{date}.csv', index_col=0)
 
 modalities = 'mw brain sensory modalities'
 brain_inputs = Celltype_Analyzer.get_skids_from_meta_meta_annotation(modalities, split=False)
@@ -42,7 +43,14 @@ SEZ_motorneurons = pymaid.get_skids_by_annotation('mw motor')
 exclude = brain_inputs+pdiff+SEZ_motorneurons
 
 order2 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude)[0] for skids in input_types.source]
-order2['order2'] = order2
+
+order2_filtered = []
+for skids in order2:
+    order2_pairs, order2_unpaired, order2_nonpaired = Promat.extract_pairs_from_list(skids, pairs)
+    order2_skids = list(order2_pairs.leftid) + list(order2_pairs.rightid) + list(order2_nonpaired.nonpaired)
+    order2_filtered.append(order2_skids)
+
+input_types['order2'] = order2_filtered
 
 # check problem with [7865696, 8252067]; discovered that when using all-edges, unpaired neurons can pass the threshold. This occurs because many sensory neurons aren't paired
 # decide if I want to throw out these unpaired neurons (more strict) or allow them
