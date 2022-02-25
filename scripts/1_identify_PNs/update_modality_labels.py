@@ -43,7 +43,7 @@ SEZ_motorneurons = pymaid.get_skids_by_annotation('mw motor')
 exclude = brain_inputs+pdiff+SEZ_motorneurons
 
 order2 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.source]
-input_types['order2'] = order2_filtered # only filtered out one neuron in 2nd-order enteric using 2022-02-15 data
+input_types['order2'] = order2 
 
 all_order2 = list(np.unique([x for sublist in input_types.order2 for x in sublist]))
 order3 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order2, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.order2]
@@ -65,7 +65,7 @@ all_order6 = list(np.unique([x for sublist in input_types.order6 for x in sublis
 
 # %%
 # export IDs for modality layers
-'''
+
 [pymaid.add_annotations(input_types.order2.loc[index], f'mw {input_types.type.loc[index]} 2nd_order') for index in input_types.index]
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 2nd_order' for index in input_types.index], 'mw brain inputs 2nd_order')
 [pymaid.add_annotations(input_types.order3.loc[index], f'mw {input_types.type.loc[index]} 3rd_order') for index in input_types.index]
@@ -74,7 +74,7 @@ pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 3rd_order' for i
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 4th_order' for index in input_types.index], 'mw brain inputs 4th_order')
 [pymaid.add_annotations(input_types.order5.loc[index], f'mw {input_types.type.loc[index]} 5th_order') for index in input_types.index if len(input_types.order5.loc[index])!=0]
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 5th_order' for index in input_types.index if len(input_types.order5.loc[index])!=0], 'mw brain inputs 5th_order')
-'''
+
 input_types = input_types.set_index('type') # for future chunks
 
 # %%
@@ -145,7 +145,6 @@ LNs_io = [Celltype_Analyzer.get_skids_from_meta_annotation(f'mw brain inputs {or
 LNs_o = [x for sublist in LNs_o for x in sublist]
 LNs_io = [x for sublist in LNs_io for x in sublist]
 
-# continue here
 pymaid.add_annotations(LNs_o, 'mw LNs_cohort')
 pymaid.add_annotations(LNs_io, 'mw LNs_noncohort')
 
@@ -157,10 +156,12 @@ order = ['olfactory', 'gustatory-external', 'gustatory-pharyngeal', 'enteric', '
 order2_ct = [Celltype(f'{celltype}', pymaid.get_skids_by_annotation(f'mw {celltype} 2nd_order')) for celltype in order]
 
 LNs = Celltype_Analyzer.get_skids_from_meta_annotation('mw brain LNs')
+accessory_nonPN = pymaid.get_skids_by_annotation('mw brain accessory non-PN') # SEZ neurons that also mostly output to SEZ; so not really dSEZ but also not brain PN
 outputs = pymaid.get_skids_by_annotation(['mw dVNC', 'mw dSEZ', 'mw RGN'])
 
-PNs_2nd = [Celltype(f'mw {celltype.name} 2nd_order PN', np.setdiff1d(celltype.skids, LNs + outputs)) for celltype in order2_ct]
+PNs_2nd = [Celltype(f'mw {celltype.name} 2nd_order PN', np.setdiff1d(celltype.skids, LNs + accessory_nonPN + outputs)) for celltype in order2_ct]
 
-current_PNs = [Celltype(f'{celltype}', pymaid.get_skids_by_annotation(f'mw {celltype} 2nd_order PN')) for celltype in order]
+[pymaid.add_annotations(celltype.skids, celltype.name) for celltype in PNs_2nd]
+pymaid.add_meta_annotations([celltype.name for celltype in PNs_2nd], 'mw brain inputs 2nd_order PN')
 
 # %%
