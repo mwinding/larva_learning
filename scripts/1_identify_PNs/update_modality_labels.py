@@ -16,8 +16,8 @@ pairs = Promat.get_pairs(pairs_path)
 # prep data
 
 # load input counts
-inputs = pd.read_csv('data/adj/inputs_2022-02-10.csv', index_col=0)
-outputs = pd.read_csv('data/adj/outputs_2022-02-10.csv', index_col=0)
+inputs = pd.read_csv('data/adj/inputs_2022-02-15.csv', index_col=0)
+outputs = pd.read_csv('data/adj/outputs_2022-02-15.csv', index_col=0)
 
 # load appropriate sensory and ascending types
 modalities = 'mw brain sensory modalities'
@@ -28,7 +28,7 @@ input_types = pd.DataFrame(zip(input_names, input_types), columns = ['type', 'so
 # %%
 # identify all 2nd/3rd/4th-order neurons
 
-date='2022-02-10'
+date='2022-02-15'
 threshold = 0.01
 edges_ad = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_all-edges_{date}.csv', index_col=0)
 edges_ad_pairs = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_paired-edges_{date}.csv', index_col=0)
@@ -42,41 +42,30 @@ pdiff = pymaid.get_skids_by_annotation('mw partially differentiated')
 SEZ_motorneurons = pymaid.get_skids_by_annotation('mw motor')
 exclude = brain_inputs+pdiff+SEZ_motorneurons
 
-order2 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude)[0] for skids in input_types.source]
-
-order2_filtered = []
-for skids in order2:
-    order2_pairs, order2_unpaired, order2_nonpaired = Promat.extract_pairs_from_list(skids, pairs)
-    order2_skids = list(order2_pairs.leftid) + list(order2_pairs.rightid) + list(order2_nonpaired.nonpaired)
-    order2_filtered.append(order2_skids)
-
-input_types['order2'] = order2_filtered
-
-# check problem with [7865696, 8252067]; discovered that when using all-edges, unpaired neurons can pass the threshold. This occurs because many sensory neurons aren't paired
-# decide if I want to throw out these unpaired neurons (more strict) or allow them
+order2 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.source]
+input_types['order2'] = order2_filtered # only filtered out one neuron in 2nd-order enteric using 2022-02-15 data
 
 all_order2 = list(np.unique([x for sublist in input_types.order2 for x in sublist]))
-order3 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order2)[0] for skids in input_types.order2]
+order3 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order2, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.order2]
 input_types['order3'] = order3
 
 all_order3 = list(np.unique([x for sublist in input_types.order3 for x in sublist]))
-order4 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order3+all_order2)[0] for skids in input_types.order3]
+order4 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order3+all_order2, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.order3]
 input_types['order4'] = order4
 
 all_order4 = list(np.unique([x for sublist in input_types.order4 for x in sublist]))
-order5 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order4+all_order3+all_order2)[0] for skids in input_types.order4]
+order5 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order4+all_order3+all_order2, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.order4]
 input_types['order5'] = order5
 
 all_order5 = list(np.unique([x for sublist in input_types.order5 for x in sublist]))
-order6 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order5+all_order4+all_order3+all_order2)[0] for skids in input_types.order5]
+order6 = [Promat.downstream_multihop(edges=edges_ad, sources=skids, hops=1, exclude=exclude+all_order5+all_order4+all_order3+all_order2, exclude_unpaired=True, pairs=pairs)[0] for skids in input_types.order5]
 input_types['order6'] = order6
 
 all_order6 = list(np.unique([x for sublist in input_types.order6 for x in sublist]))
 
 # %%
 # export IDs for modality layers
-
-
+'''
 [pymaid.add_annotations(input_types.order2.loc[index], f'mw {input_types.type.loc[index]} 2nd_order') for index in input_types.index]
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 2nd_order' for index in input_types.index], 'mw brain inputs 2nd_order')
 [pymaid.add_annotations(input_types.order3.loc[index], f'mw {input_types.type.loc[index]} 3rd_order') for index in input_types.index]
@@ -85,7 +74,7 @@ pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 3rd_order' for i
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 4th_order' for index in input_types.index], 'mw brain inputs 4th_order')
 [pymaid.add_annotations(input_types.order5.loc[index], f'mw {input_types.type.loc[index]} 5th_order') for index in input_types.index if len(input_types.order5.loc[index])!=0]
 pymaid.add_meta_annotations([f'mw {input_types.type.loc[index]} 5th_order' for index in input_types.index if len(input_types.order5.loc[index])!=0], 'mw brain inputs 5th_order')
-
+'''
 input_types = input_types.set_index('type') # for future chunks
 
 # %%
@@ -95,7 +84,7 @@ pymaid.clear_cache()
 
 # load all-all (summed) adjacency matrix and axo-axonic adjacency matrix
 subgraph = ['mw brain paper clustered neurons', 'mw brain accessory neurons']
-date='2022-02-10'
+date='2022-02-15'
 summed_adj = Promat.pull_adj(type_adj='all-all', date=date, subgraph=subgraph)
 aa_adj = Promat.pull_adj(type_adj='ad', date=date, subgraph=subgraph)
 
@@ -153,6 +142,10 @@ pymaid.add_meta_annotations([f'mw brain 4th_order LN_io {name}' for i, name in e
 pymaid.clear_cache()
 LNs_o = [Celltype_Analyzer.get_skids_from_meta_annotation(f'mw brain inputs {order} LN') for order in ['2nd_order', '3rd_order', '4th_order']]
 LNs_io = [Celltype_Analyzer.get_skids_from_meta_annotation(f'mw brain inputs {order} LN_io') for order in ['2nd_order', '3rd_order']]
+LNs_o = [x for sublist in LNs_o for x in sublist]
+LNs_io = [x for sublist in LNs_io for x in sublist]
+
+# continue here
 pymaid.add_annotations(LNs_o, 'mw LNs_cohort')
 pymaid.add_annotations(LNs_io, 'mw LNs_noncohort')
 
