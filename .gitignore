@@ -7,6 +7,9 @@ plots
 # private CATMAID credentials
 pymaid_creds.py
 
+# links to current dataset
+data_settings.py
+
 # file management from macOS
 .DS_Store
 
