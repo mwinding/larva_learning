@@ -6,6 +6,7 @@ from contools import generate_adjs
 import numpy as np
 
 from pymaid_creds import url, name, password, token
+from data_settings import data_date, pairs_path
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
 # %%
@@ -24,18 +25,14 @@ generate_adjs.adj_split_axons_dendrites(all_neurons, split_tag, special_split_ta
 
 # generate edge list with average pairwise threshold = 3
 threshold = 3
-pairs_path = 'data/pairs/pairs-2022-02-14.csv'
 pairs = contools.Promat.get_pairs(pairs_path=pairs_path)
-date = '2022-02-15'
-generate_adjs.edge_thresholds(path='data/adj', threshold=threshold, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=False, date=date)
+generate_adjs.edge_thresholds(path='data/adj', threshold=threshold, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=False, date=data_date)
 
 # %%
 
 # generate edge list with %input threshold = 0.01
 threshold = 0.01
-pairs_path = 'data/pairs/pairs-2022-02-14.csv'
 pairs = contools.Promat.get_pairs(pairs_path=pairs_path, remove_notes=False)
-date = '2022-02-15'
-generate_adjs.edge_thresholds(path='data/adj', threshold=threshold, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=True, date=date)
+generate_adjs.edge_thresholds(path='data/adj', threshold=threshold, left_annot='mw left', right_annot='mw right', pairs = pairs, fraction_input=True, date=data_date)
 
 # %%
