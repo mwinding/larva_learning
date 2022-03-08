@@ -7,17 +7,17 @@ import numpy as np
 import pandas as pd
 
 from pymaid_creds import url, name, password, token
+from data_settings import data_date, pairs_path
 rm = pymaid.CatmaidInstance(url, token, name, password)
 
-pairs_path = 'data/pairs/pairs-2022-02-14.csv'
 pairs = Promat.get_pairs(pairs_path)
 
 # %%
 # prep data
 
 # load input counts
-inputs = pd.read_csv('data/adj/inputs_2022-02-15.csv', index_col=0)
-outputs = pd.read_csv('data/adj/outputs_2022-02-15.csv', index_col=0)
+inputs = pd.read_csv(f'data/adj/inputs_{data_date}.csv', index_col=0)
+outputs = pd.read_csv(f'data/adj/outputs_{data_date}.csv', index_col=0)
 
 # load appropriate sensory and ascending types
 modalities = 'mw brain sensory modalities'
@@ -28,10 +28,9 @@ input_types = pd.DataFrame(zip(input_names, input_types), columns = ['type', 'so
 # %%
 # identify all 2nd/3rd/4th-order neurons
 
-date='2022-02-15'
 threshold = 0.01
-edges_ad = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_all-edges_{date}.csv', index_col=0)
-edges_ad_pairs = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_paired-edges_{date}.csv', index_col=0)
+edges_ad = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_all-edges_{data_date}.csv', index_col=0)
+edges_ad_pairs = pd.read_csv(f'data/edges_threshold/ad_pairwise-input-threshold-{threshold}_paired-edges_{data_date}.csv', index_col=0)
 
 modalities = 'mw brain sensory modalities'
 brain_inputs = Celltype_Analyzer.get_skids_from_meta_meta_annotation(modalities, split=False)
@@ -84,9 +83,8 @@ pymaid.clear_cache()
 
 # load all-all (summed) adjacency matrix and axo-axonic adjacency matrix
 subgraph = ['mw brain paper clustered neurons', 'mw brain accessory neurons']
-date='2022-02-15'
-summed_adj = Promat.pull_adj(type_adj='all-all', date=date, subgraph=subgraph)
-aa_adj = Promat.pull_adj(type_adj='ad', date=date, subgraph=subgraph)
+summed_adj = Promat.pull_adj(type_adj='all-all', date=data_date, subgraph=subgraph)
+aa_adj = Promat.pull_adj(type_adj='aa', date=data_date, subgraph=subgraph)
 
 order = ['olfactory', 'gustatory-external', 'gustatory-pharyngeal', 'enteric', 'thermo-warm', 'thermo-cold', 'visual', 'noci', 'mechano-Ch', 'mechano-II/III', 'proprio', 'respiratory']
 
